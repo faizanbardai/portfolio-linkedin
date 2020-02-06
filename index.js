@@ -7,6 +7,7 @@ const path = require("path");
 const listEndpoints = require("express-list-endpoints");
 
 const userRouter = require("./src/route/user");
+const experienceRouter = require("./src/route/experience");
 
 const app = express();
 const port = process.env.PORT;
@@ -30,8 +31,7 @@ app.get("/", (req, res) => res.send("FayJu - LinkedIn Portfolio Project"));
 
 app.use("/images", express.static(path.join(__dirname, "./src/images")));
 app.use("/user", userRouter);
-// app.use("/profiles", profileRouter);
-// app.use("/posts", postRouter);
+app.use("/experience", experienceRouter);
 
 console.log(listEndpoints(app));
 app.listen(port, () => console.log(`Your app is listening on port ${port}!`));

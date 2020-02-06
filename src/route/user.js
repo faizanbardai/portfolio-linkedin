@@ -16,9 +16,11 @@ router.get(
     }
     const email = req.params.email;
     try {
-      const response = await User.find({ email }).select(
-        "imageProfile experiences createdAt name surname title area bio"
-      );
+      const response = await User.find({ email })
+        .select(
+          "imageProfile experiences createdAt name surname title area bio"
+        )
+        .populate("experiences");
       response.length ? res.json(response) : res.status(404).json({});
     } catch (error) {
       console.log(error);
