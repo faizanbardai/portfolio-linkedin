@@ -74,7 +74,7 @@ router.put(
       const response = await Experience.findByIdAndUpdate(_id, update, {
         new: true
       });
-      res.json(response);
+      response ? res.json(response) : res.status(404).json({});
     } catch (error) {
       console.log(error);
       res.json(error);

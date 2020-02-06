@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../model/user");
+const Experience = require("../model/experience");
 const { check, validationResult } = require("express-validator");
 router.get(
   "/:email",
@@ -16,12 +17,12 @@ router.get(
     }
     const email = req.params.email;
     try {
-      const response = await User.find({ email })
+      const response = await User.findOne({ email: email })
         .select(
           "imageProfile experiences createdAt name surname title area bio"
         )
         .populate("experiences");
-      response.length ? res.json(response) : res.status(404).json({});
+      response ? res.json(response) : res.status(404).json({});
     } catch (error) {
       console.log(error);
       res.json(error);
@@ -107,8 +108,12 @@ router.delete(
     }
     try {
       const email = req.params.email;
+      const user = await User.findOne({ email });
+      user.experiences.forEach(
+        async experience => await Experience.findByIdAndDelete(experience)
+      );
       const response = await User.findOneAndDelete({ email });
-      response ? res.json(response) : res.status(404).json({});
+      response ? res.json() : res.status(404).json({});
     } catch (error) {
       console.log(error);
       res.json(error);
