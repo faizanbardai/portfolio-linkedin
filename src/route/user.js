@@ -83,9 +83,11 @@ router.put(
       const email = req.params.email;
       const response = await User.findOneAndUpdate({ email }, update, {
         new: true
-      }).select(
-        "imageProfile experiences createdAt name surname title area bio"
-      );
+      })
+        .select(
+          "imageProfile experiences createdAt name surname title area bio"
+        )
+        .populate("experiences");
       response ? res.json(response) : res.status(404).json({});
     } catch (error) {
       console.log(error);
