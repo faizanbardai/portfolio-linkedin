@@ -13,8 +13,8 @@ const userSchema = new Schema(
     // hash and salt field to store the username,
     // the hashed password
     // and the salt value.
-    name: String,
-    surname: String,
+    firstName: String,
+    lastName: String,
     bio: String,
     title: String,
     area: String,
