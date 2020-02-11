@@ -81,4 +81,15 @@ router.put(
     }
   }
 );
+
+router.delete("/:_id", async (req, res) => {
+  const _id = req.params._id;
+  try {
+    const response = await Experience.findByIdAndDelete(_id);
+    response ? res.json(response) : res.status(404).json({});
+  } catch (error) {
+    console.log(error);
+    res.json(error);
+  }
+});
 module.exports = router;
