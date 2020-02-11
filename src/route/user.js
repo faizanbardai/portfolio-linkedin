@@ -1,23 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../model/user");
+const { basic } = require("../utils/auth");
 const Experience = require("../model/experience");
 const { check, validationResult } = require("express-validator");
 router.get(
-  "/:email",
+  "/:username",
   [
-    check("email")
+    check("username")
       .isEmail()
       .withMessage("A valid email is required!")
   ],
+  basic,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    const email = req.params.email;
+    const username = req.params.username;
     try {
-      const response = await User.findOne({ email: email })
+      const response = await User.findOne({ username: username })
         .select(
           "imageProfile experiences createdAt name surname title area bio"
         )
@@ -33,7 +35,7 @@ router.get(
 router.post(
   "/",
   [
-    check("email")
+    check("username")
       .isEmail()
       .withMessage("A valid email is required!"),
     check("password")
@@ -46,11 +48,8 @@ router.post(
       return res.status(422).json({ errors: errors.array() });
     }
     try {
-      const { email, password } = req.body;
-      const response = await User.create({
-        email,
-        password
-      });
+      const { username, password } = req.body;
+      const response = await User.register({ username }, password);
       await response.save();
       res.json({ ok: true });
     } catch (error) {
