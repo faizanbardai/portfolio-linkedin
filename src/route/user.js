@@ -6,34 +6,55 @@ const { basic, getToken } = require("../utils/auth");
 const Experience = require("../model/experience");
 const { check, validationResult } = require("express-validator");
 
-router.get(
-  "/:username",
-  [
-    check("username")
-      .isEmail()
-      .withMessage("A valid email is required!")
-  ],
-  // basic,
-  passport.authenticate("jwt"),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
-    const username = req.params.username;
-    try {
-      const response = await User.findOne({ username: username })
-        .select(
-          "imageProfile experiences createdAt firstName lastName title area bio"
-        )
-        .populate("experiences");
-      response ? res.json(response) : res.status(404).json({});
-    } catch (error) {
-      console.log(error);
-      res.json(error);
-    }
+router.get("/:_id", passport.authenticate("jwt"), async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
   }
-);
+  const _id = req.params._id;
+  try {
+    const response = await User.findById(_id)
+      .select(
+        "imageProfile experiences createdAt firstName lastName title area bio"
+      )
+      .populate("experiences");
+    response ? res.json(response) : res.status(404).json({});
+  } catch (error) {
+    console.log(error);
+    res.json(error);
+  }
+});
+
+router.post("/token", passport.authenticate("jwt"), (req, res) => {
+  const {
+    imageProfile,
+    experiences,
+    _id,
+    username,
+    firstName,
+    lastName,
+    bio,
+    title,
+    area,
+    createdAt
+  } = req.user;
+  const token = getToken({ _id });
+  res.json({
+    token,
+    user: {
+      imageProfile,
+      experiences,
+      _id,
+      username,
+      firstName,
+      lastName,
+      bio,
+      title,
+      area,
+      createdAt
+    }
+  });
+});
 
 router.post(
   "/login",
@@ -60,17 +81,23 @@ router.post(
         imageProfile,
         area,
         bio,
-        title
+        title,
+        experiences,
+        createdAt
       } = req.user;
       res.json({
-        token: token,
-        username,
-        firstName,
-        lastName,
-        imageProfile,
-        area,
-        bio,
-        title
+        user: {
+          username,
+          firstName,
+          lastName,
+          imageProfile,
+          area,
+          bio,
+          title,
+          experiences,
+          createdAt
+        },
+        token
       });
     } catch (error) {
       console.log(error);
@@ -88,8 +115,12 @@ router.post(
     check("password")
       .isLength({ min: 8 })
       .withMessage("Password should be atlease 8 characters."),
-    check("firstName").isLength({ min: 1, max: 50 }),
-    check("lastName").isLength({ min: 1, max: 50 })
+    check("firstName")
+      .isLength({ min: 1, max: 50 })
+      .withMessage("First and Last name is required."),
+    check("lastName")
+      .isLength({ min: 1, max: 50 })
+      .withMessage("First and Last name is required.")
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -103,7 +134,12 @@ router.post(
         password
       );
       await response.save();
-      res.json({ ok: true });
+      const { imageProfile, _id, createdAt } = response;
+      const token = getToken({ _id: _id });
+      res.json({
+        user: { imageProfile, _id, username, firstName, lastName, createdAt },
+        token
+      });
     } catch (error) {
       console.log(error);
       res.json(error);
@@ -135,19 +171,19 @@ router.put("/", passport.authenticate("jwt"), async (req, res) => {
   }
 });
 
-router.delete("/", basic, async (req, res) => {
-  try {
-    const username = req.auth.user;
-    const user = await User.findOne({ username });
-    user.experiences.forEach(
-      async experience => await Experience.findByIdAndDelete(experience)
-    );
-    const response = await User.findOneAndDelete({ username });
-    response ? res.json() : res.status(404).json({});
-  } catch (error) {
-    console.log(error);
-    res.json(error);
-  }
-});
+// router.delete("/", basic, async (req, res) => {
+//   try {
+//     const username = req.auth.user;
+//     const user = await User.findOne({ username });
+//     user.experiences.forEach(
+//       async experience => await Experience.findByIdAndDelete(experience)
+//     );
+//     const response = await User.findOneAndDelete({ username });
+//     response ? res.json() : res.status(404).json({});
+//   } catch (error) {
+//     console.log(error);
+//     res.json(error);
+//   }
+// });
 
 module.exports = router;
