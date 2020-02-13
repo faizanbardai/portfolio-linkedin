@@ -1,7 +1,8 @@
 const express = require("express");
+const passport = require("passport");
 const router = express.Router();
 const User = require("../model/user");
-const { basic } = require("../utils/auth");
+const { basic, getToken } = require("../utils/auth");
 const Experience = require("../model/experience");
 const { check, validationResult } = require("express-validator");
 
@@ -12,7 +13,8 @@ router.get(
       .isEmail()
       .withMessage("A valid email is required!")
   ],
-  basic,
+  // basic,
+  passport.authenticate("jwt"),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -34,7 +36,51 @@ router.get(
 );
 
 router.post(
-  "/",
+  "/login",
+  [
+    check("username")
+      .isEmail()
+      .withMessage("A valid email is required!"),
+    check("password")
+      .isLength({ min: 8 })
+      .withMessage("Password should be atlease 8 characters.")
+  ],
+  passport.authenticate("local"),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    try {
+      const token = getToken({ _id: req.user._id });
+      const {
+        username,
+        firstName,
+        lastName,
+        imageProfile,
+        area,
+        bio,
+        title
+      } = req.user;
+      res.json({
+        token: token,
+        username,
+        firstName,
+        lastName,
+        imageProfile,
+        area,
+        bio,
+        title
+      });
+    } catch (error) {
+      console.log(error);
+      res.json(error);
+    }
+  }
+);
+
+router.post(
+  "/createAccount",
   [
     check("username")
       .isEmail()
@@ -65,7 +111,7 @@ router.post(
   }
 );
 
-router.put("/", basic, async (req, res) => {
+router.put("/", passport.authenticate("jwt"), async (req, res) => {
   try {
     const username = req.auth.user;
     const { firstName, lastName, title, area, bio } = req.body;
