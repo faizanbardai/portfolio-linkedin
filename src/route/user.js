@@ -149,7 +149,7 @@ router.post(
 
 router.put("/", passport.authenticate("jwt"), async (req, res) => {
   try {
-    const username = req.auth.user;
+    const _id = req.user;
     const { firstName, lastName, title, area, bio } = req.body;
     let update = {};
     if (firstName) update = { ...update, firstName };
@@ -157,7 +157,7 @@ router.put("/", passport.authenticate("jwt"), async (req, res) => {
     if (title) update = { ...update, title };
     if (area) update = { ...update, area };
     if (bio) update = { ...update, bio };
-    const response = await User.findOneAndUpdate({ username }, update, {
+    const response = await User.findByIdAndUpdate(_id, update, {
       new: true
     })
       .select(
