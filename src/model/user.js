@@ -18,6 +18,8 @@ const userSchema = new Schema(
     bio: String,
     title: String,
     area: String,
+    facebookID: String,
+    facebook: Object,
     imageProfile: {
       type: String,
       default: "http://via.placeholder.com/360x360"
