@@ -79,5 +79,6 @@ module.exports = {
   }),
 
   // A helper to generate token
-  getToken: user => jwt.sign(user, jwtOptions.secretOrKey, { expiresIn: 6000 })
+  getToken: user =>
+    jwt.sign(user, jwtOptions.secretOrKey, { expiresIn: 60 * 60 * 24 * 7 })
 };
