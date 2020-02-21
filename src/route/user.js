@@ -205,8 +205,11 @@ router.post(
       );
       const containerClient = blobServiceClient.getContainerClient("images");
       let deletedBlob;
-      if (blob !== "360x360") {
+      try {
         deletedBlob = await containerClient.deleteBlob(blob);
+      } catch (error) {
+        deleteBlob = null;
+        console.log(error);
       }
       const returnUser = await User.findByIdAndUpdate(
         req.user._id,
@@ -215,7 +218,7 @@ router.post(
           new: true
         }
       );
-      res.json({ returnUser, deletedBlob });
+      res.json(returnUser);
     } catch (error) {
       console.log(error);
       res.json(error);
