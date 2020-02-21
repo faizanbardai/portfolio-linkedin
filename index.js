@@ -19,7 +19,11 @@ app.use(bodyParser.json());
 
 app.use(passport.initialize());
 
-var whitelist = ["http://localhost:3000", "https://faizanbardai.github.io"];
+var whitelist = [
+  "http://localhost:3000",
+  "https://faizanbardai.github.io",
+  "https://fayju-portfolio-linkedin.azurewebsites.net"
+];
 var corsOptions = {
   origin: function(origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
