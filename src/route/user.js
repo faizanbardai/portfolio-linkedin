@@ -5,6 +5,12 @@ const User = require("../model/user");
 const { basic, getToken } = require("../utils/auth");
 const Experience = require("../model/experience");
 const { check, validationResult } = require("express-validator");
+var multer = require("multer");
+var MulterAzureStorage = require("multer-azure-storage");
+const {
+  BlobServiceClient,
+  StorageSharedKeyCredential
+} = require("@azure/storage-blob");
 
 router.get("/:_id", passport.authenticate("jwt"), async (req, res) => {
   const errors = validationResult(req);
@@ -170,6 +176,52 @@ router.put("/", passport.authenticate("jwt"), async (req, res) => {
     res.json(error);
   }
 });
+
+var upload = multer({
+  storage: new MulterAzureStorage({
+    azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    containerName: "images",
+    containerSecurity: "blob"
+  })
+});
+
+router.post(
+  "/uploadImage",
+  passport.authenticate("jwt"),
+  upload.single("images"),
+  async (req, res) => {
+    let blob = req.user.imageProfile.split("/");
+    blob = blob[blob.length - 1];
+    try {
+      const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+      const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
+      const sharedKeyCredential = new StorageSharedKeyCredential(
+        account,
+        accountKey
+      );
+      const blobServiceClient = new BlobServiceClient(
+        `https://${account}.blob.core.windows.net`,
+        sharedKeyCredential
+      );
+      const containerClient = blobServiceClient.getContainerClient("images");
+      let deletedBlob;
+      if (blob !== "360x360") {
+        deletedBlob = await containerClient.deleteBlob(blob);
+      }
+      const returnUser = await User.findByIdAndUpdate(
+        req.user._id,
+        { imageProfile: req.file.url },
+        {
+          new: true
+        }
+      );
+      res.json({ returnUser, deletedBlob });
+    } catch (error) {
+      console.log(error);
+      res.json(error);
+    }
+  }
+);
 
 // router.delete("/", basic, async (req, res) => {
 //   try {
