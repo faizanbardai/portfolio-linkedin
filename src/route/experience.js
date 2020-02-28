@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const passport = require("passport");
 const User = require("../model/user");
 const Experience = require("../model/experience");
 const { check, validationResult } = require("express-validator");
@@ -16,7 +17,7 @@ router.post(
       .withMessage("Company is required. Min. Lenght is 2 characters."),
     check("startDate").isISO8601({ strict: true })
   ],
-  basic,
+  passport.authenticate("jwt"),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -24,7 +25,7 @@ router.post(
     }
     try {
       // getting username from auth middleware
-      const username = req.auth.user;
+      const username = req.user;
       const { role, company, startDate, endDate, description, area } = req.body;
       let newExperience = { role, company, startDate };
       if (endDate) newExperience = { ...newExperience, endDate };
@@ -32,14 +33,11 @@ router.post(
       if (area) newExperience = { ...newExperience, area };
       const response = await Experience.create(newExperience);
       await response.save();
-      await User.findOneAndUpdate(
-        { username },
-        {
-          $push: {
-            experiences: response._id
-          }
+      await User.findByIdAndUpdate(req.user._id, {
+        $push: {
+          experiences: response._id
         }
-      );
+      });
       res.json(response);
     } catch (error) {
       console.log(error);
@@ -59,7 +57,7 @@ router.put(
       .withMessage("Company is required. Min. Lenght is 2 characters."),
     check("startDate").isISO8601({ strict: true })
   ],
-  basic,
+  passport.authenticate("jwt"),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
