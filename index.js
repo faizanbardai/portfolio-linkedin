@@ -12,6 +12,10 @@ const experienceRouter = require("./src/route/experience");
 const authRouter = require("./src/route/auth");
 
 const app = express();
+
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
+
 const port = process.env.PORT;
 mongooseConnection();
 
@@ -37,10 +41,18 @@ app.use(cors(corsOptions));
 
 app.get("/", (req, res) => res.send("FayJu - LinkedIn Portfolio Project"));
 
+const chat = io.of("/chat");
+chat.on("connection", socket => {
+  console.log("someone entered chatroom");
+  socket.on("disconnect", function() {
+    console.log("someone left chatroom");
+  });
+});
+
 app.use("/images", express.static(path.join(__dirname, "./src/images")));
 app.use("/user", userRouter);
 app.use("/experience", experienceRouter);
 app.use("/auth", authRouter);
 
 console.log(listEndpoints(app));
-app.listen(port, () => console.log(`Your app is listening on port ${port}!`));
+http.listen(port, () => console.log(`Your app is listening on port ${port}!`));
