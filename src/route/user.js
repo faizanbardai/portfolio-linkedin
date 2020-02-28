@@ -134,6 +134,8 @@ router.post(
       return res.status(422).json({ errors: errors.array() });
     }
     try {
+    } catch (error) {}
+    try {
       const { username, password, firstName, lastName } = req.body;
       const response = await User.register(
         { username, firstName, lastName },
@@ -147,8 +149,15 @@ router.post(
         token
       });
     } catch (error) {
-      console.log(error);
-      res.json(error);
+      switch (error.name) {
+        case "UserExistsError":
+          res.status(409).json(error);
+          break;
+        default:
+          console.log(error);
+          res.json(error);
+          break;
+      }
     }
   }
 );
@@ -204,13 +213,7 @@ router.post(
         sharedKeyCredential
       );
       const containerClient = blobServiceClient.getContainerClient("images");
-      let deletedBlob;
-      try {
-        deletedBlob = await containerClient.deleteBlob(blob);
-      } catch (error) {
-        deleteBlob = null;
-        console.log(error);
-      }
+      // await containerClient.deleteBlob(blob);
       const returnUser = await User.findByIdAndUpdate(
         req.user._id,
         { imageProfile: req.file.url },
